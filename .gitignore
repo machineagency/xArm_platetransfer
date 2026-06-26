@@ -1,0 +1,4 @@
+xArm-Python-SDK/
+.venv/
+test.ipynb
+integrationtest.ipynb
