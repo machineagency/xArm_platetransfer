@@ -1,6 +1,6 @@
 This is the code repo to use xArm for plate transportation between the Jubilee and a plate shelf.
 
-Code & hardware design credit: Nathan
+code
 
 # Setup
 
@@ -17,7 +17,14 @@ Code & hardware design credit: Nathan
    cd xArm-Python-SDK
    pip install .
    ```
-3. Attach the physical marker on the edge of the print plate.
+3. install science jubilee
+
+   ```shell
+   git clone https://github.com/machineagency/science-jubilee.git
+   cd science-jubilee
+   python3 -m pip install -e .
+   ```
+4. Attach the physical marker on the edge of the print plate.
 
    Use a [3DP jig](./hardware/3D models/Jig_for_marker.stl) to locate and attach a tape marker on the edge of the print plate (sticking a small raised bump part way along the plate with 2 layers of VHB tape, about 2mm wide and 2mm thick). This was used for locating the midpoint for the print plate. In the image below, the orange cube marks the position of the tape.
 
@@ -37,8 +44,18 @@ The controlling code is in `./code/main.ipynb`.
    2. place the plate on Jubilee, run the code for "Line up with Jubilee". Repeat the manual aligning process.
 5. Run the transfer plates to test plate transferring.
 
+# Example workflow
+
+## Plate transfer & camera capture image
+
+In the main.ipynb, we showcased how to use the plate transferring capability with xArm in a webcam capturing workflow. The xArm can pickup different plates on the shelf, put into theJubilee, and use the Jubilee toolhead to pickup a camera tool to capture images of the plate. [Video demo](./video/plate_transfer_cam_workflow.mp4).
+
+example images taken of the two plates:
+
+![camera_workflow](image/README/camera_workflow.png)
 
 # Notes
 
 1. After running the alignment code for the plate at the shelf and Jubilee, the position of the Jubilee and shelf cannot be changed, otherwise needs recalibration.
 2. The space between the Jubilee and the shelf should be relatively large to prevent collisions. If the space is too tight, the arm may not be able to move safely or solve a valid path to certain locations.
+3. In the Jubilee workflow example, the IP address of the Jubilee was changed to `192.168.2.2` to avoid conflict with xArm address (`192.168.1.205`).
