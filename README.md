@@ -17,6 +17,11 @@ code
    cd xArm-Python-SDK
    pip install .
    ```
+
+   How to connect to xArm:
+
+   * Turn on the power for the xArm, connect ethernet cable to laptop/Raspberry Pi.
+   * It takes few seconds for the xArm to establish internet connection, after the connection box makes three beep sound, run the python code for connecting to xArm.
 3. install science jubilee
 
    ```shell
@@ -26,25 +31,17 @@ code
    ```
 4. Attach the physical marker on the edge of the print plate.
 
-   Use a [3DP jig](./hardware/3D models/Jig_for_marker.stl) to locate and attach a tape marker on the edge of the print plate (sticking a small raised bump part way along the plate with 2 layers of VHB tape, about 2mm wide and 2mm thick). This was used for locating the midpoint for the print plate. In the image below, the orange cube marks the position of the tape.
+   3D print a [plate edge marker](./hardware/3D models/plate_edge_marker.stl) and attach to the upper right corner of the print plate. This was used for locating the edge for the print plate.
 
-   ![1782260192238](image/README/jig_placement.png "jig placement")
+   ![print_plate_edgemarker](image/README/print_plate_edgemarker.png "jig_placement_2")
 
-   ![jig_placement_2](image/README/jig_placement_2.png "jig_placement_2")
+# Plate Position Calibration
 
-# How to run
+1. Place the plate on the position you want to register (e.g., shelf/Jubilee), with the 3DP marker on the plate edge closer to the xArm.
+2. Run the function `register_position` in `PlateHandler` class.
+3. After running the code, manually perform a rough alignment of the xArm to the plate: position the side end stop at the plate’s height and approximately at the midpoint of the plate edge. The holder tool loaded on the xArm should also be approximately parrallel to the plate. Once the rough alignment is complete, press Enter. The xArm will perform automatic calibration process.
 
-The controlling code is in `./code/main.ipynb`.
-
-1. Turn on the power for the xArm, connect ethernet cable to laptop
-2. It takes few seconds for the xArm to establish internet connection, after the connection box makes three beep sound, run the code cell for "Connecting to XArm" in the python notebook file.
-3. Run the code in section "Arm Setup" to initialize functions
-4. Run the two code blocks to locate the position of the plate on the shelf and Jubilee
-   1. place the plate on the shelf, run the code for "Line up with shelf". After running the code, the xArm needs to be manually rough aligned to the plate position: align the side end stop to the height of the plate, positioning it about 10 mm to the left of the tape marker when facing the plate. After manual aligning, hit enter.
-   2. place the plate on Jubilee, run the code for "Line up with Jubilee". Repeat the manual aligning process.
-5. Run the transfer plates to test plate transferring.
-
-# Example workflow
+# Example Workflow
 
 ## Plate transfer & camera capture image
 

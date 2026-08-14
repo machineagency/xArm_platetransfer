@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
@@ -98,6 +100,8 @@ class PlateHandler:
         position_id: str,
         *,
         overwrite: bool = False,
+        save_to_file: bool = False,
+        position_file_path: str = "./position.json",
     ) -> dict[str, Any]:
         """
         Rough-align manually, fine-align automatically, and register a position.
@@ -118,6 +122,12 @@ class PlateHandler:
         overwrite:
             If False, an existing position cannot be recalibrated. If True, the
             pose is replaced while preserving its current ``loaded_plate``.
+        save_to_file:
+            If True, add or update this position in ``position_file_path`` after
+            calibration.
+        position_file_path:
+            JSON file used when ``save_to_file`` is True. The file is created if
+            it does not already exist.
 
         Returns
         -------
@@ -171,7 +181,124 @@ class PlateHandler:
             "loaded_plate": loaded_plate,
         }
         self.plate_positions[position_id] = plate_position
+        if save_to_file:
+            self.save_position(position_id, position_file_path)
         return plate_position
+
+    def save_position(
+        self,
+        position_id: str,
+        position_file_path: str = "./position.json",
+    ) -> Path:
+        """
+        Add or update one registered position in a JSON file.
+
+        Parameters
+        ----------
+        position_id:
+            Registered position to save, such as ``"Shelf_1"``.
+        position_file_path:
+            Destination JSON file. The file is created if needed.
+
+        Returns
+        -------
+        Path
+            Path of the saved JSON file.
+        """
+        self._validate_identifier(position_id, "position_id")
+        position = self.get_position(position_id)
+
+        path = Path(position_file_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        if path.exists():
+            file_text = path.read_text(encoding="utf-8")
+            data = json.loads(file_text) if file_text.strip() else {}
+            if not isinstance(data, dict):
+                raise ValueError("Position file must contain a JSON object.")
+        else:
+            data = {}
+
+        data[position_id] = self._position_to_json(position)
+        path.write_text(
+            json.dumps(data, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        return path
+
+    def save_positions(self, position_file_path: str = "./position.json") -> Path:
+        """
+        Save all registered positions and plate occupancy to a JSON file.
+
+        Parameters
+        ----------
+        position_file_path:
+            Destination JSON file. Parent directories are created as needed.
+
+        Returns
+        -------
+        Path
+            Path of the saved JSON file.
+        """
+        path = Path(position_file_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        data = {
+            position_id: self._position_to_json(position)
+            for position_id, position in self.plate_positions.items()
+        }
+        path.write_text(
+            json.dumps(data, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        return path
+
+    def load_positions(
+        self,
+        position_file_path: str = "./position.json",
+        *,
+        overwrite: bool = True,
+    ) -> dict[str, dict[str, Any]]:
+        """
+        Load registered positions from a JSON file into this PlateHandler.
+
+        Parameters
+        ----------
+        position_file_path:
+            Source JSON file created by ``save_positions()`` or
+            ``register_position(..., save_to_file=True)``.
+        overwrite:
+            If True, loaded positions replace existing positions with the same
+            ID. If False, loading fails when a position ID already exists.
+
+        Returns
+        -------
+        dict
+            The current ``plate_positions`` dictionary after loading.
+        """
+        path = Path(position_file_path)
+        if not path.exists():
+            raise FileNotFoundError(f"Position file does not exist: {path}")
+
+        raw_data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(raw_data, dict):
+            raise ValueError("Position file must contain a JSON object.")
+
+        loaded_positions = {}
+        for position_id, position_data in raw_data.items():
+            self._validate_identifier(position_id, "position_id")
+            if position_id in self.plate_positions and not overwrite:
+                raise ValueError(
+                    f"Position '{position_id}' is already loaded. "
+                    "Use overwrite=True to replace it."
+                )
+            loaded_positions[position_id] = self._position_from_json(
+                position_id,
+                position_data,
+            )
+
+        self.plate_positions.update(loaded_positions)
+        return self.plate_positions
 
     def register_plate(
         self,
@@ -1108,3 +1235,40 @@ class PlateHandler:
             or sample_count <= 0
         ):
             raise ValueError("sample_count must be a positive integer.")
+
+    @staticmethod
+    def _position_to_json(position: dict[str, Any]) -> dict[str, Any]:
+        """Convert an internal position record to JSON-serializable values."""
+        return {
+            "position_id": position["position_id"],
+            "pose": PlateHandler._validate_pose(position["pose"]).tolist(),
+            "loaded_plate": position["loaded_plate"],
+        }
+
+    @staticmethod
+    def _position_from_json(
+        position_id: str,
+        position_data: Any,
+    ) -> dict[str, Any]:
+        """Convert a JSON position record to the internal representation."""
+        if not isinstance(position_data, dict):
+            raise ValueError(
+                f"Position '{position_id}' must contain a JSON object."
+            )
+
+        file_position_id = position_data.get("position_id", position_id)
+        if file_position_id != position_id:
+            raise ValueError(
+                f"Position key '{position_id}' does not match "
+                f"position_id '{file_position_id}'."
+            )
+
+        loaded_plate = position_data.get("loaded_plate")
+        if loaded_plate is not None:
+            PlateHandler._validate_identifier(loaded_plate, "loaded_plate")
+
+        return {
+            "position_id": position_id,
+            "pose": PlateHandler._validate_pose(position_data.get("pose")),
+            "loaded_plate": loaded_plate,
+        }
