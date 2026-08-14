@@ -45,11 +45,16 @@ code
 
 ## Plate transfer & camera capture image
 
-In the main.ipynb, we showcased how to use the plate transferring capability with xArm in a webcam capturing workflow. The xArm can pickup different plates on the shelf, put into theJubilee, and use the Jubilee toolhead to pickup a camera tool to capture images of the plate. [Video demo](./video/plate_transfer_cam_workflow.mp4).
+In the camera_workflow_gelinspection.ipynb, we showcased how to use the plate transferring capability with xArm in a webcam capturing workflow. The xArm can pickup different plates on the shelf, put into theJubilee, and use the Jubilee toolhead to pickup a camera tool to capture images of the plate. [Video demo](./video/plate_transfer_cam_workflow.mp4).
 
-example images taken of the two plates:
+example images taken of the different plates:
 
 ![camera_workflow](image/README/camera_workflow.png)
+
+This could also support multi-plate orchestration workflows, where individual plates might require long overall durations but only brief access to the Jubilee. For example, when monitoring hydrogel swelling and deswelling cycles, the Jubilee may only be needed for a few minutes at each stage to capture images or add water/solution, while the swelling or drying process itself takes several hours. During these waiting periods, the plate can be stored on the shelf and automatically loaded onto the Jubilee only when imaging, solution refilling, or other interventions are required.
+
+![gel_cycle.png](image/README/gel_cycle.png)
+
 
 # Notes
 
